@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 
 """
-Incomplete solution. The solution works fine for the test input, but it is too computation heavy for
+~Incomplete solution. The solution works fine for the test input, but it is too computation heavy for
 the real input. There needs to be some optimization in way of transitioning the graph without getting
-the same nodes over and over again. Some cycle skipping or something like that.
+the same nodes over and over again. Some cycle skipping or something like that.~
+
+^ scratch this, by looking at the inputs more clearly and finding a little help on reddit,
+the trick is that the start-end nodes are always the same and they cycle. So the solution is to
+find the cycle length of each start node, and then find the least common multiple of all the cycle lengths.
 """
 
 import fileinput
 import re
+import math
 
 
 def main():
@@ -15,18 +20,27 @@ def main():
 
     # start node is a node that ends with "A"
     start_nodes = tuple(node for node in graph.keys() if node.endswith("A"))
-    curr_nodes = start_nodes
-    instruction_counter = 0
 
-    while not all(node.endswith("Z") for node in curr_nodes):
-        curr_instruction = instructions[instruction_counter % len(instructions)]
-        curr_nodes = [graph[node][curr_instruction] for node in curr_nodes]
-        instruction_counter += 1
+    node_length_map = {}
+    for node in start_nodes:
+        node_length_map[node] = find_cycle_length(graph, node, instructions)
+    print(node_length_map)
 
-        if instruction_counter % 10000000 == 0:
-            print(instruction_counter)
+    # find the least common multiple of all the cycle lengths
+    lcm = math.lcm(*node_length_map.values())
+    print(lcm)
 
-    print(instruction_counter)
+
+def find_cycle_length(graph, start_node, instructions):
+    """Find the length of the cycle from start node to end node."""
+    current_node = start_node
+    step_count = 0
+
+    while not current_node.endswith("Z"):
+        curr_instruction = instructions[step_count % len(instructions)]
+        current_node = graph[current_node][curr_instruction]
+        step_count += 1
+    return step_count
 
 
 def parse_input():
@@ -60,8 +74,6 @@ def parse_input():
     instructions = [1 if instruction == "R" else 0 for instruction in groups[0]]
     return instructions, graph
 
-
-instructions, graph = parse_input()
 
 if __name__ == "__main__":
     main()
